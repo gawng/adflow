@@ -167,7 +167,7 @@ test_params = [
         },
         "ref_file": "adjoint_rans_tut_wing.json",
         "aero_prob": ap_tutorial_wing,
-        "evalFuncs": ["fx", "mz", "cl", "cd", "cmz", "lift", "drag", "cavitation"],
+        "evalFuncs": ["fx", "mz", "cl", "cd", "cmz", "lift", "drag", "cavitation", "colx", "coly", "colz"],
     },
     # # Rotating frame test
     {
@@ -276,6 +276,14 @@ class TestAdjoint(reg_test_classes.RegTest):
         utils.assert_adjoint_sens_allclose(self.handler, self.CFDSolver, self.ap, tol=1e-10)
         self.assert_adjoint_failure()
 
+    def test_adjoint2(self):
+        utils.assert_adjoint2_sens_allclose(self.handler, self.CFDSolver, self.ap, tol=1e-10)
+        self.assert_adjoint_failure()
+
+    def test_adjoint_states(self):
+        utils.assert_adjoint_states_allclose(self.handler, self.CFDSolver, self.ap, tol=1e-10)
+        self.assert_adjoint_failure()
+
 
 @parameterized_class(test_params)
 class TestCmplxStep(reg_test_classes.CmplxRegTest):
@@ -313,8 +321,12 @@ class TestCmplxStep(reg_test_classes.CmplxRegTest):
         self.ap.evalFuncs = self.evalFuncs
 
         # add the default dvs to the problem
-        for dv in defaultAeroDVs:
-            self.ap.addDV(dv)
+        if self.name != "Rotating_wing":
+            for dv in defaultAeroDVs:
+                self.ap.addDV(dv)
+        else:
+            for dv in ["alpha", "beta", "mach", "T", "xRef", "yRef", "zRef"]:
+                self.ap.addDV(dv)
 
         self.CFDSolver = ADFLOW_C(options=options, debug=True)
 
